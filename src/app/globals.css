@@ -1,39 +1,92 @@
 @import "tailwindcss";
 
 @theme {
-  --color-gold-50: #fdfaf0;
-  --color-gold-100: #faf3d3;
-  --color-gold-200: #f4e5a0;
-  --color-gold-300: #ecd05e;
-  --color-gold-400: #e3b930;
-  --color-gold-500: #d4a017;
-  --color-gold-600: #b8800f;
-  --color-gold-700: #92600d;
-  --color-gold-800: #784e13;
-  --color-gold-900: #664116;
+  /* Primary — Soft Pink */
+  --color-primary: #705862;
+  --color-primary-container: #f8d7e3;
+  --color-primary-dim: #8a7080;
 
-  --color-charcoal-50: #f6f6f6;
-  --color-charcoal-100: #e7e7e7;
-  --color-charcoal-200: #d1d1d1;
-  --color-charcoal-300: #b0b0b0;
-  --color-charcoal-400: #888888;
-  --color-charcoal-500: #6d6d6d;
-  --color-charcoal-600: #5d5d5d;
-  --color-charcoal-700: #4f4f4f;
-  --color-charcoal-800: #454545;
-  --color-charcoal-900: #111111;
+  /* Secondary — Deep Brown */
+  --color-secondary: #695b5b;
 
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-serif: "Playfair Display", Georgia, serif;
+  /* Surface tiers */
+  --color-surface-lowest: #ffffff;
+  --color-surface: #f9f9f9;
+  --color-surface-low: #f3f3f3;
+
+  /* Text / on-surface */
+  --color-on-surface: #1c1b1f;
+  --color-on-surface-muted: #6b6b6b;
+  --color-on-surface-faint: #9e9e9e;
+
+  /* Outline (used at opacity) */
+  --color-outline: #705862;
+
+  /* Fonts */
+  --font-sans: "Manrope", system-ui, sans-serif;
+  --font-serif: "Noto Serif", Georgia, serif;
 }
 
 body {
-  background-color: white;
-  color: var(--color-charcoal-900);
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3 {
+h1, h2, h3, h4 {
   font-family: var(--font-serif);
+  letter-spacing: -0.02em;
+}
+
+/* Label utility */
+.label {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1rem;
+  color: var(--color-on-surface-faint);
+}
+
+/* Primary button gradient */
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dim));
+  color: white;
+  padding: 0.625rem 1.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1rem;
+  border-radius: 4px;
+  transition: opacity 0.2s;
+}
+
+.btn-primary:hover {
+  opacity: 0.88;
+}
+
+/* Ghost button */
+.btn-ghost {
+  border: 1px solid rgba(112, 88, 98, 0.2);
+  color: var(--color-on-surface);
+  padding: 0.625rem 1.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1rem;
+  border-radius: 4px;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.btn-ghost:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* Glassmorphic surface */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }

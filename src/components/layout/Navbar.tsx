@@ -7,9 +7,10 @@ import { useState } from "react";
 import { useCartStore } from "@/store/cart";
 
 const NAV_LINKS = [
-  { label: "Shop", href: "/products" },
   { label: "Collections", href: "/collections" },
-  { label: "About", href: "/about" },
+  { label: "Atelier", href: "/atelier" },
+  { label: "Archive", href: "/archive" },
+  { label: "Editorial", href: "/editorial" },
 ];
 
 export function Navbar() {
@@ -18,23 +19,25 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-charcoal-100">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="font-serif text-xl tracking-widest uppercase text-charcoal-900">
+    <header className="sticky top-0 z-50 glass">
+      <nav className="max-w-7xl mx-auto px-6 lg:px-10 h-14 flex items-center justify-between">
+        <Link
+          href="/"
+          className="text-xs font-semibold tracking-[0.25em] uppercase text-on-surface"
+          style={{ fontFamily: "var(--font-sans)" }}
+        >
           Eesha Luxe
         </Link>
 
-        {/* Desktop nav */}
         <ul className="hidden md:flex items-center gap-8">
           {NAV_LINKS.map((link) => (
             <li key={link.href}>
               <Link
                 href={link.href}
-                className={`text-xs tracking-widest uppercase transition-colors duration-200 ${
+                className={`label transition-colors duration-200 ${
                   pathname.startsWith(link.href)
-                    ? "text-gold-600 border-b border-gold-600 pb-0.5"
-                    : "text-charcoal-600 hover:text-charcoal-900"
+                    ? "text-primary border-b border-primary pb-px"
+                    : "text-on-surface-muted hover:text-on-surface"
                 }`}
               >
                 {link.label}
@@ -43,43 +46,40 @@ export function Navbar() {
           ))}
         </ul>
 
-        {/* Actions */}
         <div className="flex items-center gap-4">
-          <button aria-label="Search" className="text-charcoal-600 hover:text-charcoal-900 transition-colors">
-            <Search size={18} />
+          <button aria-label="Search" className="text-on-surface-muted hover:text-primary transition-colors">
+            <Search size={16} strokeWidth={1.5} />
           </button>
-          <Link href="/account" aria-label="Account" className="text-charcoal-600 hover:text-charcoal-900 transition-colors">
-            <User size={18} />
+          <Link href="/account" aria-label="Account" className="text-on-surface-muted hover:text-primary transition-colors">
+            <User size={16} strokeWidth={1.5} />
           </Link>
-          <Link href="/cart" aria-label="Cart" className="relative text-charcoal-600 hover:text-charcoal-900 transition-colors">
-            <ShoppingBag size={18} />
+          <Link href="/cart" aria-label="Cart" className="relative text-on-surface-muted hover:text-primary transition-colors">
+            <ShoppingBag size={16} strokeWidth={1.5} />
             {itemCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-gold-600 text-white text-[10px] flex items-center justify-center font-medium">
+              <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-sm bg-primary text-white text-[9px] flex items-center justify-center">
                 {itemCount > 9 ? "9+" : itemCount}
               </span>
             )}
           </Link>
-          {/* Mobile menu toggle */}
           <button
-            className="md:hidden text-charcoal-600"
+            className="md:hidden text-on-surface-muted"
             onClick={() => setMobileOpen((v) => !v)}
             aria-label="Toggle menu"
           >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
       </nav>
 
-      {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-charcoal-100 px-6 py-4">
-          <ul className="flex flex-col gap-4">
+        <div className="md:hidden glass px-6 py-6">
+          <ul className="flex flex-col gap-6">
             {NAV_LINKS.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
-                  className="text-sm tracking-widest uppercase text-charcoal-700 hover:text-gold-600 transition-colors"
+                  className="label text-on-surface-muted hover:text-primary transition-colors"
                 >
                   {link.label}
                 </Link>
