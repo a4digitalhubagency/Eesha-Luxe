@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { AuthHeader } from "./AuthHeader";
 import { CheckoutInput } from "@/components/checkout/CheckoutInput";
 import { useSessionStore } from "@/store/session";
@@ -18,25 +19,33 @@ export function LoginForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!email.trim() || !password) return;
+
     setError("");
     setLoading(true);
 
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
 
-    const data = await res.json();
-    setLoading(false);
+      const data = await res.json();
 
-    if (!res.ok) {
-      setError(data.error ?? "Sign in failed.");
-      return;
+      if (!res.ok) {
+        setError(data.error ?? "Sign in failed. Please try again.");
+        return;
+      }
+
+      setUser({ id: data.id, email: data.email, name: data.name ?? "" });
+      router.push("/account");
+      router.refresh();
+    } catch {
+      setError("Unable to connect. Please check your connection and try again.");
+    } finally {
+      setLoading(false);
     }
-
-    setUser({ id: data.id ?? "", email: data.email ?? email, name: data.name ?? "" });
-    router.push("/account");
   }
 
   return (
@@ -63,33 +72,43 @@ export function LoginForm() {
               label="Email Address"
               type="email"
               value={email}
-              onChange={setEmail}
+              onChange={(v) => { setEmail(v); setError(""); }}
               autoComplete="email"
             />
             <CheckoutInput
               label="Password"
               type="password"
               value={password}
-              onChange={setPassword}
+              onChange={(v) => { setPassword(v); setError(""); }}
               autoComplete="current-password"
             />
 
             <div className="flex justify-end -mt-2">
-              <Link href="/forgot-password" className="text-xs text-on-surface-faint hover:text-primary transition-colors">
-                Forgot your password?
-              </Link>
+              <span className="text-xs text-on-surface-faint">
+                Forgot your password? Contact support.
+              </span>
             </div>
 
             {error && (
-              <p className="text-xs text-red-500 -mt-2">{error}</p>
+              <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-sm px-3 py-2.5 -mt-2">
+                <AlertCircle size={14} className="text-red-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-red-600 leading-relaxed">{error}</p>
+              </div>
             )}
 
             <button
               type="submit"
-              disabled={loading}
-              className="btn-primary w-full h-12 flex items-center justify-center gap-2 disabled:opacity-60"
+              disabled={loading || !email.trim() || !password}
+              className="btn-primary w-full h-12 flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              {loading ? "Signing in…" : <>Sign In <span>→</span></>}
+              {loading ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" />
+                  Signing in…
+                </>
+              ) : (
+                "Sign In"
+              )}
             </button>
           </form>
 

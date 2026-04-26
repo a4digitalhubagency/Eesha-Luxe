@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check } from "lucide-react";
+import { AlertCircle, Check, Loader2 } from "lucide-react";
 import { AuthHeader } from "./AuthHeader";
 import { CheckoutInput } from "@/components/checkout/CheckoutInput";
 import { useSessionStore } from "@/store/session";
@@ -20,44 +20,69 @@ export function RegisterForm() {
   const [error, setError] = useState("");
 
   function set(field: string) {
-    return (v: string) => setForm((f) => ({ ...f, [field]: v }));
+    return (v: string) => {
+      setForm((f) => ({ ...f, [field]: v }));
+      setError("");
+    };
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!agreed) return;
 
-    setError("");
-
+    if (!form.firstName.trim() || !form.lastName.trim()) {
+      setError("Please enter your full name.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (form.password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
     if (form.password !== form.confirm) {
       setError("Passwords do not match.");
       return;
     }
 
+    setError("");
     setLoading(true);
 
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        firstName: form.firstName,
-        lastName: form.lastName,
-        email: form.email,
-        password: form.password,
-      }),
-    });
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          email: form.email.trim(),
+          password: form.password,
+        }),
+      });
 
-    const data = await res.json();
-    setLoading(false);
+      const data = await res.json();
 
-    if (!res.ok) {
-      setError(data.error ?? "Registration failed.");
-      return;
+      if (!res.ok) {
+        setError(data.error ?? "Registration failed. Please try again.");
+        return;
+      }
+
+      setUser({ id: data.id, email: data.email, name: data.name ?? `${form.firstName} ${form.lastName}` });
+      router.push("/account");
+      router.refresh();
+    } catch {
+      setError("Unable to connect. Please check your connection and try again.");
+    } finally {
+      setLoading(false);
     }
-
-    setUser({ id: "", email: form.email, name: `${form.firstName} ${form.lastName}` });
-    router.push("/account");
   }
+
+  const passwordStrength =
+    form.password.length === 0 ? null :
+    form.password.length < 8 ? "weak" :
+    form.password.length < 12 ? "fair" : "strong";
 
   return (
     <div className="bg-surface min-h-screen flex flex-col">
@@ -83,14 +108,61 @@ export function RegisterForm() {
               <CheckoutInput label="First Name" value={form.firstName} onChange={set("firstName")} autoComplete="given-name" />
               <CheckoutInput label="Last Name" value={form.lastName} onChange={set("lastName")} autoComplete="family-name" />
             </div>
-            <CheckoutInput label="Email Address" type="email" value={form.email} onChange={set("email")} autoComplete="email" />
-            <CheckoutInput label="Password" type="password" value={form.password} onChange={set("password")} autoComplete="new-password" />
-            <CheckoutInput label="Confirm Password" type="password" value={form.confirm} onChange={set("confirm")} autoComplete="new-password" />
+
+            <CheckoutInput
+              label="Email Address"
+              type="email"
+              value={form.email}
+              onChange={set("email")}
+              autoComplete="email"
+            />
+
+            <div>
+              <CheckoutInput
+                label="Password"
+                type="password"
+                value={form.password}
+                onChange={set("password")}
+                autoComplete="new-password"
+              />
+              {passwordStrength && (
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="flex gap-1 flex-1">
+                    {["weak", "fair", "strong"].map((level, i) => (
+                      <div
+                        key={level}
+                        className={`h-0.5 flex-1 rounded-full transition-colors ${
+                          passwordStrength === "weak" && i === 0 ? "bg-red-400" :
+                          passwordStrength === "fair" && i <= 1 ? "bg-amber-400" :
+                          passwordStrength === "strong" ? "bg-emerald-400" :
+                          "bg-outline/15"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className={`text-[10px] uppercase tracking-wide ${
+                    passwordStrength === "weak" ? "text-red-400" :
+                    passwordStrength === "fair" ? "text-amber-500" :
+                    "text-emerald-500"
+                  }`}>
+                    {passwordStrength}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <CheckoutInput
+              label="Confirm Password"
+              type="password"
+              value={form.confirm}
+              onChange={set("confirm")}
+              autoComplete="new-password"
+            />
 
             <label className="flex items-start gap-3 cursor-pointer">
               <span
                 onClick={() => setAgreed((v) => !v)}
-                className={`mt-0.5 w-4 h-4 flex items-center justify-center flex-shrink-0 border transition-all ${
+                className={`mt-0.5 w-4 h-4 flex items-center justify-center shrink-0 border transition-all ${
                   agreed ? "bg-secondary border-secondary" : "bg-surface-lowest border-outline/25"
                 }`}
               >
@@ -105,15 +177,25 @@ export function RegisterForm() {
             </label>
 
             {error && (
-              <p className="text-xs text-red-500 -mt-2">{error}</p>
+              <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-sm px-3 py-2.5 -mt-2">
+                <AlertCircle size={14} className="text-red-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-red-600 leading-relaxed">{error}</p>
+              </div>
             )}
 
             <button
               type="submit"
               disabled={loading || !agreed}
-              className="btn-primary w-full h-12 flex items-center justify-center gap-2 disabled:opacity-40"
+              className="btn-primary w-full h-12 flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              {loading ? "Creating account…" : <>Create Account <span>→</span></>}
+              {loading ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" />
+                  Creating account…
+                </>
+              ) : (
+                "Create Account"
+              )}
             </button>
           </form>
 
