@@ -40,15 +40,14 @@ export const useCartStore = create<CartState>()(
       },
 
       clearCart: () => set({ items: [] }),
-
-      get total() {
-        return get().items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-      },
-
-      get itemCount() {
-        return get().items.reduce((sum, i) => sum + i.quantity, 0);
-      },
     }),
     { name: "eesha-cart" }
   )
 );
+
+// Derived selectors — computed outside state to avoid Object.assign getter bug
+export const selectItemCount = (s: CartState) =>
+  s.items.reduce((sum, i) => sum + i.quantity, 0);
+
+export const selectTotal = (s: CartState) =>
+  s.items.reduce((sum, i) => sum + i.price * i.quantity, 0);

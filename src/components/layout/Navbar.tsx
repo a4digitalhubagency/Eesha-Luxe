@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ShoppingBag, User, Search, Menu, X } from "lucide-react";
 import { useState } from "react";
-import { useCartStore } from "@/store/cart";
+import { useCartStore, selectItemCount } from "@/store/cart";
 
 const NAV_LINKS = [
   { label: "Collections", href: "/collections" },
@@ -15,7 +15,7 @@ const NAV_LINKS = [
 
 export function Navbar() {
   const pathname = usePathname();
-  const itemCount = useCartStore((s) => s.itemCount);
+  const itemCount = useCartStore(selectItemCount);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (

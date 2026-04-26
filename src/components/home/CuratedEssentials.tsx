@@ -1,26 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const CATEGORIES = [
-  {
-    label: "Clothing",
-    href: "/collections/clothing",
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    label: "Handbags",
-    href: "/collections/handbags",
-    image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    label: "Accessories",
-    href: "/collections/accessories",
-    image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80",
-  },
-];
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  imageUrl: string | null;
+}
 
-export function CuratedEssentials() {
-  const [clothing, ...right] = CATEGORIES;
+export function CuratedEssentials({ categories }: { categories: Category[] }) {
+  const [first, ...rest] = categories;
+
+  if (!first) return null;
 
   return (
     <section className="bg-surface py-20">
@@ -35,51 +26,58 @@ export function CuratedEssentials() {
 
         <div className="grid grid-cols-2 gap-3">
           {/* Left — tall */}
-          <Link href={clothing.href} className="relative overflow-hidden group rounded-[4px]">
+          <Link href={`/collections/${first.slug}`} className="relative overflow-hidden group rounded-[4px]">
             <div className="relative w-full aspect-[3/4] bg-surface-low">
-              <Image
-                src={clothing.image}
-                alt={clothing.label}
-                fill
-                className="object-cover object-center transition-transform duration-700 group-hover:scale-[1.02]"
-                sizes="(max-width: 768px) 50vw, 600px"
-              />
+              {first.imageUrl && (
+                <Image
+                  src={first.imageUrl}
+                  alt={first.name}
+                  fill
+                  className="object-cover object-center transition-transform duration-700 group-hover:scale-[1.02]"
+                  sizes="(max-width: 768px) 50vw, 600px"
+                />
+              )}
               <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300" />
               <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/40 to-transparent">
-                <span
-                  className="text-white text-xl"
-                  style={{ fontFamily: "var(--font-serif)" }}
-                >
-                  {clothing.label}
+                <span className="text-white text-xl" style={{ fontFamily: "var(--font-serif)" }}>
+                  {first.name}
                 </span>
               </div>
             </div>
           </Link>
 
-          {/* Right — two stacked */}
+          {/* Right — stacked */}
           <div className="flex flex-col gap-3">
-            {right.map((cat) => (
-              <Link key={cat.label} href={cat.href} className="overflow-hidden group rounded-[4px]">
+            {rest.slice(0, 2).map((cat) => (
+              <Link key={cat.id} href={`/collections/${cat.slug}`} className="overflow-hidden group rounded-[4px]">
                 <div className="relative w-full aspect-[3/2] bg-surface-low">
-                  <Image
-                    src={cat.image}
-                    alt={cat.label}
-                    fill
-                    className="object-cover object-center transition-transform duration-700 group-hover:scale-[1.02]"
-                    sizes="(max-width: 768px) 50vw, 300px"
-                  />
+                  {cat.imageUrl && (
+                    <Image
+                      src={cat.imageUrl}
+                      alt={cat.name}
+                      fill
+                      className="object-cover object-center transition-transform duration-700 group-hover:scale-[1.02]"
+                      sizes="(max-width: 768px) 50vw, 300px"
+                    />
+                  )}
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300" />
                   <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/35 to-transparent">
-                    <span
-                      className="text-white text-base"
-                      style={{ fontFamily: "var(--font-serif)" }}
-                    >
-                      {cat.label}
+                    <span className="text-white text-base" style={{ fontFamily: "var(--font-serif)" }}>
+                      {cat.name}
                     </span>
                   </div>
                 </div>
               </Link>
             ))}
+
+            {/* Filler if fewer than 2 right categories */}
+            {rest.length === 0 && (
+              <Link href="/collections" className="overflow-hidden group rounded-[4px]">
+                <div className="relative w-full aspect-[3/2] bg-surface-low flex items-center justify-center">
+                  <span className="label text-on-surface-faint">More Collections</span>
+                </div>
+              </Link>
+            )}
           </div>
         </div>
       </div>

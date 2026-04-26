@@ -15,8 +15,6 @@ export interface CartState {
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  total: number;
-  itemCount: number;
 }
 
 export interface ApiResponse<T> {
