@@ -1,27 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
 
-const PROTECTED = ["/account"];
-
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-
-  const isProtected = PROTECTED.some((p) => pathname.startsWith(p));
-  if (!isProtected) return NextResponse.next();
-
   const token = req.cookies.get("eesha_token")?.value;
-  if (!token) {
-    return NextResponse.redirect(new URL("/login", req.url));
+  const session = token ? await verifyToken(token) : null;
+
+  // Admin routes — require ADMIN role
+  if (pathname.startsWith("/admin")) {
+    if (!session) {
+      return NextResponse.redirect(new URL(`/login?from=${encodeURIComponent(pathname)}`, req.url));
+    }
+    if (session.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+    return NextResponse.next();
   }
 
-  const session = await verifyToken(token);
-  if (!session) {
-    return NextResponse.redirect(new URL("/login", req.url));
+  // Protected user routes
+  if (pathname.startsWith("/account") || pathname.startsWith("/checkout")) {
+    if (!session) {
+      return NextResponse.redirect(new URL(`/login?from=${encodeURIComponent(pathname)}`, req.url));
+    }
+    return NextResponse.next();
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/account/:path*"],
+  matcher: ["/account/:path*", "/checkout/:path*", "/admin/:path*"],
 };

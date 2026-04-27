@@ -8,13 +8,6 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-const STANDARD_SIZES = ["FR 34", "FR 36", "FR 38", "FR 40", "FR 42", "FR 44"];
-
-const BADGES = [
-  { icon: "truck" as const, text: "Complimentary Express Shipping" },
-  { icon: "leaf" as const, text: "Sustainably Sourced Silk" },
-];
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const product = await prisma.product.findUnique({ where: { slug } });
@@ -31,7 +24,6 @@ export default async function ProductPage({ params }: Props) {
   const product = await prisma.product.findUnique({
     where: { slug, published: true },
     include: { category: true },
-    // composition queried via select below once column exists
   });
 
   if (!product) notFound();
@@ -48,10 +40,18 @@ export default async function ProductPage({ params }: Props) {
     alt: `${product.name} — view ${i + 1}`,
   }));
 
-  const sizes = STANDARD_SIZES.map((label, i) => ({
-    label,
-    available: product.stock > 0 ? i < STANDARD_SIZES.length - (product.stock < 5 ? 3 : 2) || i < 4 : false,
-  }));
+  // Use sizes from DB; all are available when in stock
+  const sizes = product.sizes.length > 0
+    ? product.sizes.map((label) => ({ label, available: product.stock > 0 }))
+    : [];
+
+  // Shipping badge always applies; material badge only when composition is set
+  const badges: { icon: "truck" | "leaf"; text: string }[] = [
+    { icon: "truck", text: "Complimentary Express Shipping" },
+    ...(product.composition
+      ? [{ icon: "leaf" as const, text: product.composition.split(".")[0].trim() }]
+      : []),
+  ];
 
   const completeTheLook = relatedProducts.map((p) => ({
     id: p.id,
@@ -70,12 +70,12 @@ export default async function ProductPage({ params }: Props) {
           name: product.name,
           price: Number(product.price),
           collection: product.category.name,
-          category: "Ready-to-Wear",
-          composition: (product as Record<string, unknown>).composition as string | null ?? null,
+          category: product.category.name,
+          composition: product.composition ?? null,
           description: product.description ?? "",
           images,
           sizes,
-          badges: BADGES,
+          badges,
         }}
       />
       <CompleteTheLook products={completeTheLook} />

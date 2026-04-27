@@ -9,9 +9,10 @@ const COOKIE = "eesha_token";
 const EXPIRY = "7d";
 
 export type JwtPayload = {
-  sub: string;   // user id
+  sub: string;
   email: string;
   name: string;
+  role: "CUSTOMER" | "ADMIN";
 };
 
 export async function signToken(payload: JwtPayload) {
