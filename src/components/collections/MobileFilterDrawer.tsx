@@ -143,8 +143,8 @@ export function MobileFilterDrawer({
               }}
             />
             <div className="flex justify-between mt-2">
-              <span className="text-xs text-on-surface-faint">${priceFloor}</span>
-              <span className="text-xs text-on-surface-faint">${priceMax.toLocaleString()}</span>
+              <span className="text-xs text-on-surface-faint">₦{priceFloor.toLocaleString("en-NG")}</span>
+              <span className="text-xs text-on-surface-faint">₦{priceMax.toLocaleString("en-NG")}</span>
             </div>
           </div>
         </div>

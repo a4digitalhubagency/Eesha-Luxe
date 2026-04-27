@@ -79,7 +79,7 @@ export function EditorialEdit({ products }: { products: Product[] }) {
                 <div className="p-4 pb-5">
                   <p className="label mb-1.5">{product.category}</p>
                   <p className="text-sm font-medium text-on-surface">{product.name}</p>
-                  <p className="text-sm text-on-surface-muted mt-1">${product.price.toLocaleString()}</p>
+                  <p className="text-sm text-on-surface-muted mt-1">₦{product.price.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</p>
                 </div>
               </div>
             </Link>

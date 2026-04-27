@@ -82,7 +82,7 @@ export function ProductDetail({ product }: { product: ProductData }) {
 
             {/* Price */}
             <p className="text-base font-medium text-on-surface mb-6">
-              ${product.price.toLocaleString()}.00
+              ₦{product.price.toLocaleString("en-NG", { minimumFractionDigits: 2 })}
             </p>
 
             {/* Description */}

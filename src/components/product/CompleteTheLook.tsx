@@ -47,7 +47,7 @@ export function CompleteTheLook({ products }: { products: Product[] }) {
                 </div>
                 <div className="p-3 pb-4">
                   <p className="label mb-1">{item.name}</p>
-                  <p className="text-xs text-on-surface-muted">${item.price.toLocaleString()}</p>
+                  <p className="text-xs text-on-surface-muted">₦{item.price.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</p>
                 </div>
               </div>
             </Link>

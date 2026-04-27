@@ -49,14 +49,14 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       <div className="hidden md:block">
         <p className="text-sm font-medium text-on-surface leading-snug">{product.name}</p>
         {product.color && <p className="text-xs text-on-surface-faint mt-0.5">{product.color}</p>}
-        <p className="text-sm text-on-surface-muted mt-1">${product.price.toFixed(2)}</p>
+        <p className="text-sm text-on-surface-muted mt-1">₦{product.price.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</p>
       </div>
 
       {/* Mobile info — name + price inline */}
       <div className="md:hidden px-1">
         <div className="flex items-baseline justify-between gap-2">
           <p className="text-sm font-medium text-on-surface leading-snug">{product.name}</p>
-          <p className="text-sm text-on-surface-muted flex-shrink-0">${product.price.toFixed(2)}</p>
+          <p className="text-sm text-on-surface-muted flex-shrink-0">₦{product.price.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</p>
         </div>
         {product.color && <p className="text-[11px] uppercase tracking-[0.08rem] text-on-surface-faint mt-0.5">{product.color}</p>}
       </div>
