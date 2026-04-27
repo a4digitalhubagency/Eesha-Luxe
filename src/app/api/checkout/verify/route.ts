@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { verifyTransaction } from "@/lib/paystack";
 import { prisma } from "@/lib/prisma";
 import { sendCustomerConfirmation, sendAdminNotification } from "@/lib/email";
+import { handleApiError, safeJson } from "@/lib/errors";
 
 interface CartItem {
   productId: string;
@@ -22,44 +23,52 @@ interface ShippingInput {
   country?: string;
 }
 
+interface VerifyBody {
+  reference: string;
+  items: CartItem[];
+  shipping: ShippingInput;
+  subtotal: number;
+  tax: number;
+}
+
 export async function POST(req: NextRequest) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const body = await req.json();
-  const { reference, items, shipping, subtotal, tax } = body as {
-    reference: string;
-    items: CartItem[];
-    shipping: ShippingInput;
-    subtotal: number;
-    tax: number;
-  };
-
-  if (!reference || !items?.length || !shipping) {
-    return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
-  }
-
-  // Verify with PayStack
-  let payment;
   try {
-    payment = await verifyTransaction(reference);
-  } catch (err) {
-    console.error("PayStack verify error:", err);
-    return NextResponse.json({ error: "Payment verification failed." }, { status: 502 });
-  }
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  if (payment.status !== "success") {
-    return NextResponse.json({ error: "Payment was not completed." }, { status: 402 });
-  }
+    const body = await safeJson<VerifyBody>(req);
+    if (!body) {
+      return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    }
 
-  const total = subtotal + tax;
+    const { reference, items, shipping, subtotal, tax } = body;
 
-  // Create address + order in a transaction
-  let order;
-  try {
-    order = await prisma.$transaction(async (tx) => {
+    if (!reference || !items?.length || !shipping?.line1 || !shipping?.city) {
+      return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+    }
+
+    // Verify payment with PayStack
+    let payment;
+    try {
+      payment = await verifyTransaction(reference);
+    } catch (err) {
+      console.error("[PayStack verify]", err);
+      return NextResponse.json({ error: "Payment verification failed. Please contact support." }, { status: 502 });
+    }
+
+    if (payment.status !== "success") {
+      return NextResponse.json(
+        { error: `Payment was not completed (status: ${payment.status}).` },
+        { status: 402 }
+      );
+    }
+
+    const total = subtotal + tax;
+
+    // Create address + order atomically
+    const order = await prisma.$transaction(async (tx) => {
       const address = await tx.address.create({
         data: {
           line1: shipping.line1,
@@ -93,48 +102,40 @@ export async function POST(req: NextRequest) {
           address: true,
           user: { select: { name: true, email: true } },
           items: {
-            include: { product: { select: { name: true, images: true } } },
+            include: { product: { select: { name: true } } },
           },
         },
       });
     });
+
+    const orderRef = `LX-${order.id.slice(-8).toUpperCase()}`;
+
+    // Send emails non-blocking — never fail the order response over email
+    Promise.all([
+      sendCustomerConfirmation({
+        customerEmail: order.user.email,
+        customerName: order.user.name ?? shipping.firstName,
+        orderRef,
+        items: items.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
+        subtotal,
+        tax,
+        total,
+        shipping: { ...shipping, country: shipping.country ?? "Nigeria" },
+      }),
+      sendAdminNotification({
+        customerEmail: order.user.email,
+        customerName: order.user.name ?? shipping.firstName,
+        orderRef,
+        items: items.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
+        subtotal,
+        tax,
+        total,
+        shipping: { ...shipping, country: shipping.country ?? "Nigeria" },
+      }),
+    ]).catch((err) => console.error("[Email send]", err));
+
+    return NextResponse.json({ orderId: order.id, orderRef });
   } catch (err) {
-    console.error("Order creation error:", err);
-    return NextResponse.json({ error: "Failed to save order. Please contact support." }, { status: 500 });
+    return handleApiError(err, "Failed to create order. Please contact support.");
   }
-
-  const orderRef = `LX-${order.id.slice(-8).toUpperCase()}`;
-
-  // Send emails — don't block the response
-  const emailItems = items.map((item) => ({
-    name: item.name,
-    quantity: item.quantity,
-    price: item.price,
-  }));
-
-  const emailParams = {
-    customerEmail: order.user.email,
-    customerName: order.user.name ?? shipping.firstName,
-    orderRef,
-    items: emailItems,
-    subtotal,
-    tax,
-    total,
-    shipping: {
-      firstName: shipping.firstName,
-      lastName: shipping.lastName,
-      line1: shipping.line1,
-      city: shipping.city,
-      state: shipping.state,
-      postalCode: shipping.postalCode,
-      country: shipping.country ?? "Nigeria",
-    },
-  };
-
-  Promise.all([
-    sendCustomerConfirmation(emailParams),
-    sendAdminNotification(emailParams),
-  ]).catch((err) => console.error("Email send error:", err));
-
-  return NextResponse.json({ orderId: order.id, orderRef });
 }
