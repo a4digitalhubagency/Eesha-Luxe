@@ -138,31 +138,30 @@ export function CheckoutView() {
       return;
     }
 
-    type PaystackPopInstance = {
-      newTransaction: (opts: {
-        key: string; email: string; amount: number; ref: string;
-        onSuccess: (t: { reference: string }) => void;
-        onCancel: () => void;
-      }) => void;
-    };
+    // v1 inline.js exposes PaystackPop as a plain object with setup(), not a class.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const PaystackPop = (window as any).PaystackPop as new () => PaystackPopInstance;
-    const popup = new PaystackPop();
+    const PaystackPop = (window as any).PaystackPop as {
+      setup: (opts: {
+        key: string; email: string; amount: number; ref: string;
+        callback: (response: { reference: string }) => void;
+        onClose: () => void;
+      }) => { openIframe: () => void };
+    };
 
-    popup.newTransaction({
+    const handler = PaystackPop.setup({
       key: publicKey,
       email: user?.email ?? "",
       amount: Math.round(total * 100), // NGN → kobo
       ref: reference,
 
-      onSuccess: async (transaction) => {
+      callback: async (response) => {
         // 3. Verify and create order
         try {
           const res = await fetch("/api/checkout/verify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              reference: transaction.reference,
+              reference: response.reference,
               items,
               shipping: {
                 firstName: form.firstName,
@@ -187,17 +186,19 @@ export function CheckoutView() {
           router.push(`/checkout/success?ref=${data.orderId}`);
         } catch {
           setError(
-            `Payment received but order could not be saved. Contact support with reference: ${transaction.reference}`
+            `Payment received but order could not be saved. Contact support with reference: ${response.reference}`
           );
           setSubmitting(false);
         }
       },
 
-      onCancel: () => {
+      onClose: () => {
         setError("Payment was cancelled. You have not been charged.");
         setSubmitting(false);
       },
     });
+
+    handler.openIframe();
   }
 
   return (
