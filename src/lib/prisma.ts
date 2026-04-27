@@ -3,23 +3,34 @@ export { Prisma };
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
-// In local development, port 6543 (Supabase PgBouncer pooler) is often blocked
-// by firewalls or ISPs. Fall back to DIRECT_URL (port 5432) automatically so
-// the dev server always connects. In production (Vercel), DATABASE_URL stays as
-// the pooler URL which is required for serverless connection management.
 function resolveDbUrl(): string {
   const dbUrl = process.env.DATABASE_URL ?? "";
   const directUrl = process.env.DIRECT_URL ?? "";
 
-  const usesDirect =
-    process.env.NODE_ENV !== "production" &&
-    dbUrl.includes(":6543") &&
-    directUrl.length > 0;
+  // In development, the Supabase pooler (port 6543) is often blocked by home
+  // routers, ISPs, or firewalls. Prefer DIRECT_URL (port 5432) which is the
+  // standard PostgreSQL port and is almost never blocked.
+  // On Vercel (production) DATABASE_URL is always the pooler — keep it that way.
+  const isDev = process.env.NODE_ENV !== "production";
+  const poolerInUrl = dbUrl.includes(":6543") || dbUrl.includes("pooler.supabase");
 
-  const base = usesDirect ? directUrl : dbUrl;
+  let base: string;
+  if (isDev && poolerInUrl && directUrl) {
+    base = directUrl;
+    console.log("[prisma] dev mode: using DIRECT_URL (port 5432) instead of pooler");
+  } else if (isDev && poolerInUrl && !directUrl) {
+    console.warn(
+      "[prisma] WARNING: DATABASE_URL uses the Supabase pooler (port 6543) but DIRECT_URL is not set.\n" +
+      "         Port 6543 is often blocked locally. Add DIRECT_URL to your .env:\n" +
+      "         DIRECT_URL=\"postgresql://postgres:[password]@db.[ref].supabase.co:5432/postgres\""
+    );
+    base = dbUrl;
+  } else {
+    base = dbUrl;
+  }
 
-  // Cap the connection pool so we don't exhaust Supabase free-tier slots.
-  if (!base.includes("connection_limit")) {
+  // Cap the connection pool to avoid exhausting Supabase free-tier slots.
+  if (base && !base.includes("connection_limit")) {
     const sep = base.includes("?") ? "&" : "?";
     return `${base}${sep}connection_limit=5&pool_timeout=30`;
   }
