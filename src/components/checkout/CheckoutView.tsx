@@ -120,8 +120,33 @@ export function CheckoutView() {
       return;
     }
 
-    // 2. Open PayStack popup (dynamic import — browser only)
-    const { default: PaystackPop } = await import("@paystack/inline-js");
+    // 2. Load PayStack CDN script on demand (avoids bundler/Turbopack issues
+    //    with the @paystack/inline-js CJS package)
+    try {
+      await new Promise<void>((resolve, reject) => {
+        // Already loaded from a previous attempt on this page
+        if ((window as { PaystackPop?: unknown }).PaystackPop) { resolve(); return; }
+        const script = document.createElement("script");
+        script.src = "https://js.paystack.co/v1/inline.js";
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error("Failed to load payment SDK"));
+        document.head.appendChild(script);
+      });
+    } catch {
+      setError("Payment service could not be loaded. Please check your connection and try again.");
+      setSubmitting(false);
+      return;
+    }
+
+    type PaystackPopInstance = {
+      newTransaction: (opts: {
+        key: string; email: string; amount: number; ref: string;
+        onSuccess: (t: { reference: string }) => void;
+        onCancel: () => void;
+      }) => void;
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const PaystackPop = (window as any).PaystackPop as new () => PaystackPopInstance;
     const popup = new PaystackPop();
 
     popup.newTransaction({
@@ -130,7 +155,7 @@ export function CheckoutView() {
       amount: Math.round(total * 100), // NGN → kobo
       ref: reference,
 
-      onSuccess: async (transaction: { reference: string }) => {
+      onSuccess: async (transaction) => {
         // 3. Verify and create order
         try {
           const res = await fetch("/api/checkout/verify", {
