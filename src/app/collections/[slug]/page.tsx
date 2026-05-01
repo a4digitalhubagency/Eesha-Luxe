@@ -34,6 +34,7 @@ export default async function CollectionPage({ params }: Props) {
           sizes: true,
           price: true,
           images: true,
+          stock: true,
         },
       },
     },
@@ -49,6 +50,7 @@ export default async function CollectionPage({ params }: Props) {
     sizes: p.sizes,
     price: Number(p.price),
     image: p.images[0] ?? "",
+    stock: p.stock,
   }));
 
   return (

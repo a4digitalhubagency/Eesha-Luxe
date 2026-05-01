@@ -57,7 +57,7 @@ export default async function CheckoutSuccessPage({ searchParams }: Props) {
                   <p className="text-xs text-on-surface-faint mt-0.5">Qty {item.quantity}</p>
                 </div>
                 <p className="text-sm text-on-surface-muted">
-                  ₦{Number(item.total).toLocaleString()}.00
+                  ₦{Number(item.total).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
             ))}
@@ -66,7 +66,7 @@ export default async function CheckoutSuccessPage({ searchParams }: Props) {
           <div className="border-t border-outline/10 mt-2 pt-4 flex flex-col gap-2">
             <div className="flex justify-between text-sm text-on-surface-muted">
               <span>Subtotal</span>
-              <span>₦{Number(order.subtotal).toLocaleString()}.00</span>
+              <span>₦{Number(order.subtotal).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             <div className="flex justify-between text-sm text-on-surface-muted">
               <span>Shipping</span>
@@ -92,6 +92,7 @@ export default async function CheckoutSuccessPage({ searchParams }: Props) {
             {order.address.line1}<br />
             {order.address.city}, {order.address.state} {order.address.postalCode}<br />
             {order.address.country}
+            {order.address.phone ? <><br />{order.address.phone}</> : null}
           </p>
           <p className="text-xs text-on-surface-faint mt-3">Expected delivery: 3–5 business days after dispatch.</p>
         </div>

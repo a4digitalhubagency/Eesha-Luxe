@@ -17,8 +17,8 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Protected user routes
-  if (pathname.startsWith("/account") || pathname.startsWith("/checkout")) {
+  // Protected user routes (checkout allows guest — handled in the page itself)
+  if (pathname.startsWith("/account")) {
     if (!session) {
       return NextResponse.redirect(new URL(`/login?from=${encodeURIComponent(pathname)}`, req.url));
     }
@@ -29,5 +29,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/account/:path*", "/checkout/:path*", "/admin/:path*"],
+  matcher: ["/account/:path*", "/admin/:path*"],
 };

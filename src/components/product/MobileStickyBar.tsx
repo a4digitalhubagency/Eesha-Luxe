@@ -7,9 +7,10 @@ interface MobileStickyBarProps {
   onAddToBag: () => void;
   disabled?: boolean;
   added?: boolean;
+  outOfStock?: boolean;
 }
 
-export function MobileStickyBar({ onAddToBag, disabled = false, added = false }: MobileStickyBarProps) {
+export function MobileStickyBar({ onAddToBag, disabled = false, added = false, outOfStock = false }: MobileStickyBarProps) {
   const [wishlisted, setWishlisted] = useState(false);
 
   return (
@@ -27,10 +28,10 @@ export function MobileStickyBar({ onAddToBag, disabled = false, added = false }:
       </button>
       <button
         onClick={onAddToBag}
-        disabled={disabled || added}
+        disabled={disabled || added || outOfStock}
         className="flex-1 h-11 btn-primary flex items-center justify-center disabled:opacity-40"
       >
-        {added ? "Added to Bag ✓" : disabled ? "Select a Size" : "Add to Bag"}
+        {outOfStock ? "Sold Out" : added ? "Added to Bag ✓" : disabled ? "Select a Size" : "Add to Bag"}
       </button>
     </div>
   );

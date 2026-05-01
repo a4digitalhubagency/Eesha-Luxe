@@ -66,7 +66,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
         <h1 className="text-3xl text-on-surface mb-5" style={{ fontFamily: "var(--font-serif)", letterSpacing: "-0.02em" }}>
           Product Catalog
         </h1>
-        <Link href="/admin/products" className="btn-primary w-full flex items-center justify-center gap-2 h-11 text-sm mb-6">
+        <Link href="/admin/products/new" className="btn-primary w-full flex items-center justify-center gap-2 h-11 text-sm mb-6">
           <span className="text-base leading-none">+</span> Add Product
         </Link>
 
@@ -120,7 +120,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                         Category · {product.category.name}
                       </p>
                     </div>
-                    <button className="text-on-surface-faint shrink-0 text-lg leading-none pb-1">⋮</button>
+                    <Link href={`/admin/products/${product.id}/edit`} className="text-[10px] uppercase tracking-widest text-primary shrink-0">Edit</Link>
                   </div>
                   {/* Details row */}
                   <div className="border-t border-outline/8 px-4 py-3 flex flex-col gap-2">
@@ -130,7 +130,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] uppercase tracking-widest text-on-surface-faint">Price</span>
-                      <span className="text-sm font-medium text-on-surface">₦{Number(product.price).toLocaleString()}.00</span>
+                      <span className="text-sm font-medium text-on-surface">₦{Number(product.price).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] uppercase tracking-widest text-on-surface-faint">Status</span>
@@ -169,9 +169,14 @@ export default async function AdminProductsPage({ searchParams }: Props) {
               </h1>
               <p className="text-sm text-on-surface-muted">Manage your digital atelier&apos;s curated collections.</p>
             </div>
-            <button className="btn-primary flex items-center gap-2 px-5 h-10 text-sm">
-              <span className="text-base leading-none">+</span> Add Product
-            </button>
+            <div className="flex items-center gap-2">
+              <Link href="/admin/categories" className="text-[10px] uppercase tracking-widest text-on-surface-muted hover:text-primary transition-colors px-4 h-10 flex items-center border border-outline/20 rounded-sm">
+                Categories
+              </Link>
+              <Link href="/admin/products/new" className="btn-primary flex items-center gap-2 px-5 h-10 text-sm">
+                <span className="text-base leading-none">+</span> Add Product
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -216,7 +221,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                           </div>
                         </td>
                         <td className="px-5 py-4 text-sm text-on-surface-muted">{product.category.name}</td>
-                        <td className="px-5 py-4 text-sm text-on-surface">₦{Number(product.price).toLocaleString()}.00</td>
+                        <td className="px-5 py-4 text-sm text-on-surface">₦{Number(product.price).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-1.5">
                             <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
@@ -224,7 +229,10 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                           </div>
                         </td>
                         <td className="px-5 py-4">
-                          <Link href={`/products/${product.slug}`} className="text-[10px] uppercase tracking-widest text-on-surface-faint hover:text-primary transition-colors">View</Link>
+                          <div className="flex items-center gap-3">
+                            <Link href={`/admin/products/${product.id}/edit`} className="text-[10px] uppercase tracking-widest text-primary hover:underline underline-offset-2">Edit</Link>
+                            <Link href={`/products/${product.slug}`} className="text-[10px] uppercase tracking-widest text-on-surface-faint hover:text-primary transition-colors">View</Link>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -248,7 +256,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
 
           <div className="grid grid-cols-3 gap-4">
             {[
-              { label: "Total Inventory Value", value: `₦${totalInventoryValue.toLocaleString()}.00` },
+              { label: "Total Inventory Value", value: `₦${totalInventoryValue.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
               { label: "Active SKUs",           value: stats._count.id.toString() },
               { label: "Low Stock Alerts",      value: lowStockCount.toString() },
             ].map(({ label, value }) => (

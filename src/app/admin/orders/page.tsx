@@ -21,10 +21,14 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
   const currentPage = Math.max(1, Number(page));
   const limit = 20;
 
+  // Support searching by "LX-ABCD1234" or just "ABCD1234" (last 8 chars of id)
+  const refMatch = search.match(/^(?:LX-)?([A-Z0-9]{8})$/i);
   const where = search
     ? {
         OR: [
-          { id: { contains: search, mode: "insensitive" as const } },
+          ...(refMatch
+            ? [{ id: { endsWith: refMatch[1], mode: "insensitive" as const } }]
+            : [{ id: { contains: search, mode: "insensitive" as const } }]),
           { user: { email: { contains: search, mode: "insensitive" as const } } },
           { user: { name: { contains: search, mode: "insensitive" as const } } },
         ],

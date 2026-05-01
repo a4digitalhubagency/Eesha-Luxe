@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { handleApiError, safeJson } from "@/lib/errors";
+import { sendOrderStatusUpdate } from "@/lib/email";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -56,11 +57,30 @@ export async function PATCH(req: NextRequest, { params }: Props) {
     }
 
     const { id } = await params;
+    const newStatus = status as (typeof VALID_STATUSES)[number];
+
+    // Fetch current order so we can detect a real status change and email if so
+    const current = await prisma.order.findUnique({
+      where: { id },
+      select: { status: true, user: { select: { name: true, email: true } } },
+    });
+    if (!current) return NextResponse.json({ error: "Order not found." }, { status: 404 });
+
     const order = await prisma.order.update({
       where: { id },
-      data: { status: status as (typeof VALID_STATUSES)[number] },
+      data: { status: newStatus },
       select: { id: true, status: true },
     });
+
+    // Fire-and-forget email — only if status actually changed
+    if (current.status !== newStatus) {
+      sendOrderStatusUpdate({
+        customerEmail: current.user.email,
+        customerName: current.user.name ?? "Valued Customer",
+        orderRef: `LX-${order.id.slice(-8).toUpperCase()}`,
+        status: newStatus,
+      }).catch((err) => console.error("[Status email]", err));
+    }
 
     return NextResponse.json(order);
   } catch (err) {

@@ -72,17 +72,17 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                 <div key={item.id} className="flex items-center gap-4 py-3">
                   <div className="flex-1">
                     <p className="text-sm font-medium text-on-surface">{item.product.name}</p>
-                    <p className="text-xs text-on-surface-faint mt-0.5">Qty {item.quantity} · ₦{Number(item.unitPrice).toLocaleString()}.00 each</p>
+                    <p className="text-xs text-on-surface-faint mt-0.5">Qty {item.quantity} · ₦{Number(item.unitPrice).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} each</p>
                   </div>
                   <p className="text-sm text-on-surface-muted shrink-0">
-                    ₦{Number(item.total).toLocaleString()}.00
+                    ₦{Number(item.total).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
               ))}
             </div>
             <div className="border-t border-outline/10 mt-2 pt-4 flex flex-col gap-2">
               <div className="flex justify-between text-sm text-on-surface-muted">
-                <span>Subtotal</span><span>₦{Number(order.subtotal).toLocaleString()}.00</span>
+                <span>Subtotal</span><span>₦{Number(order.subtotal).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between text-sm text-on-surface-muted">
                 <span>Shipping</span><span>Complimentary</span>
@@ -102,6 +102,9 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             <p className="label text-on-surface-muted mb-4">Customer</p>
             <p className="text-sm font-medium text-on-surface">{order.user.name}</p>
             <p className="text-sm text-on-surface-muted mt-0.5">{order.user.email}</p>
+            {order.address.phone && (
+              <p className="text-sm text-on-surface-muted mt-0.5">{order.address.phone}</p>
+            )}
           </div>
 
           {/* Shipping address */}

@@ -19,6 +19,7 @@ interface ShippingAddress {
   state: string;
   postalCode: string;
   country: string;
+  phone?: string;
 }
 
 interface EmailOrderParams {
@@ -157,6 +158,136 @@ export async function sendCustomerConfirmation(params: EmailOrderParams) {
   });
 }
 
+type OrderStatus = "PENDING" | "CONFIRMED" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED" | "REFUNDED";
+
+interface StatusUpdateParams {
+  customerEmail: string;
+  customerName: string;
+  orderRef: string;
+  status: OrderStatus;
+}
+
+const STATUS_CONTENT: Record<OrderStatus, { subject: string; eyebrow: string; heading: string; body: string } | null> = {
+  PENDING: null, // never email about this
+  CONFIRMED: null, // covered by initial confirmation
+  PROCESSING: {
+    subject: "Your order is being prepared",
+    eyebrow: "Order Update",
+    heading: "Your order is being prepared.",
+    body: "Our atelier team has begun preparing your order with care. We will notify you as soon as it has been dispatched.",
+  },
+  SHIPPED: {
+    subject: "Your order is on its way",
+    eyebrow: "Dispatched",
+    heading: "Your order is on its way.",
+    body: "Your order has left our atelier and is on its way to you. Expected delivery is 3–5 business days from today.",
+  },
+  DELIVERED: {
+    subject: "Your order has been delivered",
+    eyebrow: "Delivered",
+    heading: "Welcome to your new pieces.",
+    body: "Your order has been delivered. We hope you love every detail. If anything is not right, our atelier team is here to help — simply reply to this email.",
+  },
+  CANCELLED: {
+    subject: "Your order has been cancelled",
+    eyebrow: "Cancelled",
+    heading: "Your order has been cancelled.",
+    body: "Your order has been cancelled. If you were charged, a full refund has been initiated and will appear in your account within 5–7 business days.",
+  },
+  REFUNDED: {
+    subject: "Your refund has been processed",
+    eyebrow: "Refunded",
+    heading: "Your refund has been processed.",
+    body: "A full refund has been initiated for your order. The amount should appear in your account within 5–7 business days.",
+  },
+};
+
+interface PasswordResetParams {
+  customerEmail: string;
+  customerName: string;
+  resetUrl: string;
+}
+
+export async function sendPasswordReset(params: PasswordResetParams) {
+  const { customerEmail, customerName, resetUrl } = params;
+
+  const html = baseLayout(`
+    <p style="margin:0 0 4px;font-size:11px;color:#c9b99a;letter-spacing:0.15em;text-transform:uppercase;">Password Reset</p>
+    <h1 style="margin:0 0 24px;font-size:28px;color:#0a0908;letter-spacing:-0.02em;">Reset Your Password</h1>
+
+    <p style="margin:0 0 24px;font-size:14px;color:#6b6560;line-height:1.7;">
+      Dear ${customerName},
+    </p>
+
+    <p style="margin:0 0 24px;font-size:14px;color:#6b6560;line-height:1.7;">
+      We received a request to reset the password for your Eesha Luxe account.
+      Click the button below to set a new password. This link expires in 1 hour.
+    </p>
+
+    <table cellpadding="0" cellspacing="0" style="margin:0 auto 32px;">
+      <tr>
+        <td style="background:#0a0908;border-radius:2px;">
+          <a href="${resetUrl}" style="display:inline-block;padding:14px 32px;color:#ffffff;text-decoration:none;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;">
+            Reset Password
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 16px;font-size:12px;color:#9c9189;line-height:1.7;">
+      Or copy this link into your browser:<br>
+      <span style="color:#6b6560;word-break:break-all;">${resetUrl}</span>
+    </p>
+
+    <div style="border-top:1px solid #f0ebe4;padding-top:20px;margin-top:32px;">
+      <p style="margin:0;font-size:11px;color:#9c9189;line-height:1.7;">
+        If you did not request a password reset, you can safely ignore this email — your password will not be changed.
+      </p>
+    </div>
+  `);
+
+  return resend.emails.send({
+    from: FROM,
+    to: customerEmail,
+    subject: "Reset your Eesha Luxe password",
+    html,
+  });
+}
+
+export async function sendOrderStatusUpdate(params: StatusUpdateParams) {
+  const content = STATUS_CONTENT[params.status];
+  if (!content) return; // statuses we don't email about
+
+  const html = baseLayout(`
+    <p style="margin:0 0 4px;font-size:11px;color:#c9b99a;letter-spacing:0.15em;text-transform:uppercase;">${content.eyebrow}</p>
+    <h1 style="margin:0 0 24px;font-size:28px;color:#0a0908;letter-spacing:-0.02em;">${content.heading}</h1>
+
+    <p style="margin:0 0 24px;font-size:14px;color:#6b6560;line-height:1.7;">
+      Dear ${params.customerName},
+    </p>
+
+    <p style="margin:0 0 24px;font-size:14px;color:#6b6560;line-height:1.7;">
+      ${content.body}
+    </p>
+
+    <div style="background:#faf9f7;padding:16px 20px;margin-bottom:24px;">
+      <p style="margin:0;font-size:11px;color:#9c9189;letter-spacing:0.1em;text-transform:uppercase;">Order Reference</p>
+      <p style="margin:4px 0 0;font-size:20px;color:#0a0908;letter-spacing:0.05em;">${params.orderRef}</p>
+    </div>
+
+    <p style="margin:0;font-size:12px;color:#9c9189;line-height:1.7;">
+      Questions? Simply reply to this email — our atelier team is here to help.
+    </p>
+  `);
+
+  return resend.emails.send({
+    from: FROM,
+    to: params.customerEmail,
+    subject: `${content.subject} · ${params.orderRef}`,
+    html,
+  });
+}
+
 export async function sendAdminNotification(params: EmailOrderParams) {
   const { customerEmail, customerName, orderRef, items, subtotal, tax, total, shipping } = params;
 
@@ -168,7 +299,7 @@ export async function sendAdminNotification(params: EmailOrderParams) {
       <p style="margin:0 0 8px;font-size:11px;color:#9c9189;letter-spacing:0.1em;text-transform:uppercase;">Customer</p>
       <p style="margin:0;font-size:13px;color:#1a1a1a;line-height:1.8;">
         <strong>${customerName}</strong><br>
-        ${customerEmail}<br><br>
+        ${customerEmail}${shipping.phone ? `<br>${shipping.phone}` : ""}<br><br>
         ${shipping.firstName} ${shipping.lastName}<br>
         ${shipping.line1}<br>
         ${shipping.city}, ${shipping.state} ${shipping.postalCode}<br>

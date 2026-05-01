@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ShoppingBag, User, Search, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useCartStore, selectItemCount } from "@/store/cart";
 
 const NAV_LINKS = [
@@ -15,8 +15,25 @@ const NAV_LINKS = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const itemCount = useCartStore(selectItemCount);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (searchOpen) searchRef.current?.focus();
+  }, [searchOpen]);
+
+  function handleSearchSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const q = searchValue.trim();
+    if (!q) return;
+    setSearchOpen(false);
+    setSearchValue("");
+    router.push(`/search?q=${encodeURIComponent(q)}`);
+  }
 
   return (
     <header className="sticky top-0 z-50 glass">
@@ -47,7 +64,11 @@ export function Navbar() {
         </ul>
 
         <div className="flex items-center gap-4">
-          <button aria-label="Search" className="text-on-surface-muted hover:text-primary transition-colors">
+          <button
+            aria-label="Search"
+            onClick={() => setSearchOpen((v) => !v)}
+            className="text-on-surface-muted hover:text-primary transition-colors"
+          >
             <Search size={16} strokeWidth={1.5} />
           </button>
           <Link href="/account" aria-label="Account" className="text-on-surface-muted hover:text-primary transition-colors">
@@ -70,6 +91,31 @@ export function Navbar() {
           </button>
         </div>
       </nav>
+
+      {/* Search bar — slides down below the nav */}
+      {searchOpen && (
+        <div className="border-t border-outline/10 glass px-6 lg:px-10 py-4">
+          <form onSubmit={handleSearchSubmit} className="max-w-7xl mx-auto flex items-center gap-3">
+            <Search size={16} strokeWidth={1.5} className="text-on-surface-faint shrink-0" />
+            <input
+              ref={searchRef}
+              type="search"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              placeholder="Search products…"
+              className="flex-1 bg-transparent outline-none text-sm text-on-surface placeholder:text-on-surface-faint"
+            />
+            <button
+              type="button"
+              onClick={() => { setSearchOpen(false); setSearchValue(""); }}
+              className="text-on-surface-faint hover:text-on-surface transition-colors"
+              aria-label="Close search"
+            >
+              <X size={16} strokeWidth={1.5} />
+            </button>
+          </form>
+        </div>
+      )}
 
       {mobileOpen && (
         <div className="md:hidden glass px-6 py-6">

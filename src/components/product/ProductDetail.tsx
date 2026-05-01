@@ -22,6 +22,7 @@ interface ProductData {
   sizes: { label: string; available: boolean }[];
   badges: { icon: "truck" | "leaf"; text: string }[];
   slug: string;
+  stock: number;
 }
 
 const BADGE_ICONS = {
@@ -35,13 +36,16 @@ export function ProductDetail({ product }: { product: ProductData }) {
   const [added, setAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
 
+  const outOfStock = product.stock === 0;
+  const lowStock = product.stock > 0 && product.stock <= 3;
+
   function handleAddToBag() {
-    if (!selectedSize) return;
+    if (!selectedSize || outOfStock) return;
     addItem({
       productId: product.id,
       name: product.name,
       price: product.price,
-      quantity,
+      quantity: Math.min(quantity, product.stock),
       image: product.images[0].src,
       slug: product.slug,
     });
@@ -81,9 +85,21 @@ export function ProductDetail({ product }: { product: ProductData }) {
             </h1>
 
             {/* Price */}
-            <p className="text-base font-medium text-on-surface mb-6">
-              ₦{product.price.toLocaleString("en-NG", { minimumFractionDigits: 2 })}
-            </p>
+            <div className="flex items-center gap-3 mb-6">
+              <p className="text-base font-medium text-on-surface">
+                ₦{product.price.toLocaleString("en-NG", { minimumFractionDigits: 2 })}
+              </p>
+              {outOfStock && (
+                <span className="px-2 py-1 bg-on-surface text-surface text-[9px] uppercase tracking-widest rounded-sm">
+                  Sold Out
+                </span>
+              )}
+              {lowStock && (
+                <span className="px-2 py-1 bg-amber-500 text-white text-[9px] uppercase tracking-widest rounded-sm">
+                  Only {product.stock} left
+                </span>
+              )}
+            </div>
 
             {/* Description */}
             <p className="text-sm text-on-surface-muted leading-relaxed mb-8">
@@ -108,7 +124,11 @@ export function ProductDetail({ product }: { product: ProductData }) {
             {/* Quantity */}
             <div className="mb-8">
               <span className="label text-on-surface block mb-3">Quantity</span>
-              <QuantitySelector value={quantity} onChange={setQuantity} />
+              <QuantitySelector
+                value={quantity}
+                onChange={setQuantity}
+                max={Math.max(1, Math.min(10, product.stock))}
+              />
             </div>
 
             {/* Badges (mobile) */}
@@ -130,10 +150,16 @@ export function ProductDetail({ product }: { product: ProductData }) {
             <div className="hidden md:flex flex-col gap-3 mb-8">
               <button
                 onClick={handleAddToBag}
-                disabled={!selectedSize || added}
+                disabled={!selectedSize || added || outOfStock}
                 className="w-full h-12 btn-primary flex items-center justify-center disabled:opacity-40 transition-all"
               >
-                {added ? "Added to Bag ✓" : selectedSize ? "Add to Bag" : "Select a Size"}
+                {outOfStock
+                  ? "Sold Out"
+                  : added
+                  ? "Added to Bag ✓"
+                  : selectedSize
+                  ? "Add to Bag"
+                  : "Select a Size"}
               </button>
               <button className="btn-ghost w-full h-11 flex items-center justify-center gap-2">
                 <Heart size={14} strokeWidth={1.5} />
@@ -172,7 +198,7 @@ export function ProductDetail({ product }: { product: ProductData }) {
       </div>
 
       {/* Mobile sticky bar */}
-      <MobileStickyBar onAddToBag={handleAddToBag} disabled={!selectedSize} added={added} />
+      <MobileStickyBar onAddToBag={handleAddToBag} disabled={!selectedSize} added={added} outOfStock={outOfStock} />
     </>
   );
 }

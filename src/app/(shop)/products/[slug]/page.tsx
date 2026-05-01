@@ -76,6 +76,7 @@ export default async function ProductPage({ params }: Props) {
           images,
           sizes,
           badges,
+          stock: product.stock,
         }}
       />
       <CompleteTheLook products={completeTheLook} />

@@ -39,7 +39,7 @@ export function LoginForm() {
       }
 
       setUser({ id: data.id, email: data.email, name: data.name ?? "" });
-      router.push("/account");
+      router.push(data.role === "ADMIN" ? "/admin" : "/account");
       router.refresh();
     } catch {
       setError("Unable to connect. Please check your connection and try again.");
@@ -84,9 +84,9 @@ export function LoginForm() {
             />
 
             <div className="flex justify-end -mt-2">
-              <span className="text-xs text-on-surface-faint">
-                Forgot your password? Contact support.
-              </span>
+              <Link href="/forgot-password" className="text-xs text-primary hover:underline underline-offset-2">
+                Forgot your password?
+              </Link>
             </div>
 
             {error && (

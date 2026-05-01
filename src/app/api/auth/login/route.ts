@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     const token = await signToken({ sub: user.id, email: user.email, name: user.name ?? "", role: user.role });
     const opts = cookieOptions(60 * 60 * 24 * 7);
 
-    const res = NextResponse.json({ ok: true, id: user.id, name: user.name, email: user.email });
+    const res = NextResponse.json({ ok: true, id: user.id, name: user.name, email: user.email, role: user.role });
     res.cookies.set({ ...opts, value: token });
     return res;
   } catch {
