@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ChevronRight, Plus, Pencil, LogOut,
-  User, CreditCard, Bell, ShieldCheck,
   Home, Package, Heart, UserCircle, MapPin,
 } from "lucide-react";
 import { useSessionStore } from "@/store/session";
@@ -43,13 +42,6 @@ const STATUS_LABEL: Record<string, string> = {
   CANCELLED: "Cancelled",
   REFUNDED: "Refunded",
 };
-
-const SETTINGS = [
-  { label: "Personal Information", icon: User },
-  { label: "Payment Methods", icon: CreditCard },
-  { label: "Notifications", icon: Bell },
-  { label: "Security & Privacy", icon: ShieldCheck },
-];
 
 const BOTTOM_NAV = [
   { label: "Home", icon: Home, href: "/" },
@@ -339,25 +331,6 @@ export function AccountView() {
           )}
         </section>
 
-        {/* Account Settings */}
-        <section className="mb-10">
-          <h2 className="text-xl text-on-surface mb-4" style={{ fontFamily: "var(--font-serif)" }}>Account Settings</h2>
-          <div className="flex flex-col">
-            {SETTINGS.map(({ label, icon: Icon }, i) => (
-              <button
-                key={label}
-                className={`flex items-center gap-4 py-4 text-left ${i < SETTINGS.length - 1 ? "border-b border-outline/10" : ""}`}
-              >
-                <span className="w-8 h-8 flex items-center justify-center bg-surface-low rounded-[4px] flex-shrink-0">
-                  <Icon size={15} strokeWidth={1.5} className="text-on-surface-muted" />
-                </span>
-                <span className="flex-1 text-sm text-on-surface">{label}</span>
-                <ChevronRight size={15} className="text-on-surface-faint" />
-              </button>
-            ))}
-          </div>
-        </section>
-
         {/* Sign Out */}
         <button
           onClick={handleSignOut}
@@ -461,15 +434,13 @@ export function AccountView() {
               )}
             </section>
 
-            {/* Addresses + Settings side-by-side */}
-            <div className="grid grid-cols-2 gap-8">
-              <section>
-                <div className="flex items-baseline justify-between mb-5">
-                  <h2 className="text-2xl text-on-surface" style={{ fontFamily: "var(--font-serif)" }}>Addresses</h2>
-                  <button className="text-on-surface-faint hover:text-primary transition-colors">
-                    <Plus size={16} />
-                  </button>
-                </div>
+            <section>
+              <div className="flex items-baseline justify-between mb-5">
+                <h2 className="text-2xl text-on-surface" style={{ fontFamily: "var(--font-serif)" }}>Addresses</h2>
+                <button className="text-on-surface-faint hover:text-primary transition-colors">
+                  <Plus size={16} />
+                </button>
+              </div>
                 {loading ? (
                   <AddressSkeletonLg />
                 ) : defaultAddress ? (
@@ -489,26 +460,7 @@ export function AccountView() {
                 ) : (
                   <AddressEmpty compact />
                 )}
-              </section>
-
-              <section>
-                <h2 className="text-2xl text-on-surface mb-5" style={{ fontFamily: "var(--font-serif)" }}>Settings</h2>
-                <div className="flex flex-col bg-surface-lowest rounded-[4px] overflow-hidden">
-                  {SETTINGS.map(({ label, icon: Icon }, i) => (
-                    <button
-                      key={label}
-                      className={`flex items-center gap-3 px-4 py-3.5 text-left hover:bg-surface-low transition-colors ${
-                        i < SETTINGS.length - 1 ? "border-b border-outline/10" : ""
-                      }`}
-                    >
-                      <Icon size={14} strokeWidth={1.5} className="text-on-surface-faint flex-shrink-0" />
-                      <span className="flex-1 text-sm text-on-surface">{label}</span>
-                      <ChevronRight size={13} className="text-on-surface-faint" />
-                    </button>
-                  ))}
-                </div>
-              </section>
-            </div>
+            </section>
           </div>
         </div>
       </div>
