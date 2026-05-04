@@ -8,9 +8,9 @@ import { useCartStore, selectItemCount } from "@/store/cart";
 
 const NAV_LINKS = [
   { label: "Collections", href: "/collections" },
-  { label: "Atelier", href: "/atelier" },
-  { label: "Archive", href: "/archive" },
-  { label: "Editorial", href: "/editorial" },
+  { label: "About", href: "/about" },
+  { label: "FAQ", href: "/faq" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export function Navbar() {

@@ -2,36 +2,49 @@ import Link from "next/link";
 
 const LINKS = {
   "Customer Care": [
-    { label: "Shipping", href: "/shipping" },
-    { label: "Returns", href: "/returns" },
-    { label: "Sizing", href: "/sizing" },
-    { label: "Track Order", href: "/track" },
+    { label: "FAQ", href: "/faq" },
+    { label: "Contact", href: "/contact" },
+    { label: "Track Order", href: "/account/orders" },
   ],
   "The Brand": [
-    { label: "Sustainability", href: "/sustainability" },
-    { label: "Privacy", href: "/privacy" },
-    { label: "Contact", href: "/contact" },
+    { label: "About", href: "/about" },
+    { label: "Collections", href: "/collections" },
   ],
-  "Follow Us": [
-    { label: "Instagram", href: "https://instagram.com" },
-    { label: "Pinterest", href: "https://pinterest.com" },
+  "Legal": [
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Terms & Conditions", href: "/terms" },
   ],
 };
+
+const SOCIAL = [
+  { label: "Instagram", href: "https://instagram.com" },
+  { label: "Pinterest", href: "https://pinterest.com" },
+];
 
 export function Footer() {
   return (
     <footer className="bg-on-surface text-on-surface-faint">
-      <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16 grid grid-cols-2 md:grid-cols-4 gap-10">
-        <div>
+      <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16 grid grid-cols-2 md:grid-cols-5 gap-10">
+        <div className="col-span-2">
           <p className="text-xs font-semibold tracking-[0.25em] uppercase text-surface-lowest mb-4">
             Eesha Luxe
           </p>
-          <p className="text-xs leading-relaxed text-on-surface-faint/70">
-            Curated luxury goods for the modern connoisseur.
+          <p className="text-xs leading-relaxed text-on-surface-faint/70 max-w-xs">
+            Curated luxury goods for the modern connoisseur — a digital atelier of considered pieces.
           </p>
-          <p className="text-xs leading-relaxed text-on-surface-faint/50 mt-1">
-            Atelier · Editorial
-          </p>
+          <div className="flex items-center gap-4 mt-6">
+            {SOCIAL.map((s) => (
+              <a
+                key={s.href}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-on-surface-faint/60 hover:text-primary-container transition-colors"
+              >
+                {s.label}
+              </a>
+            ))}
+          </div>
         </div>
         {Object.entries(LINKS).map(([section, links]) => (
           <div key={section}>
