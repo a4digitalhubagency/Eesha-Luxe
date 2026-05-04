@@ -178,7 +178,6 @@ export function CheckoutView() {
 
     const guestEmail = !user ? authForm.email.trim() : undefined;
 
-    let reference: string;
     let publicKey: string;
     let serverTotal: number;
     try {
@@ -196,7 +195,6 @@ export function CheckoutView() {
         setSubmitting(false);
         return;
       }
-      reference = data.reference;
       publicKey = data.publicKey;
       serverTotal = data.total;
     } catch {
@@ -223,19 +221,17 @@ export function CheckoutView() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const PaystackPop = (window as any).PaystackPop as {
       setup: (opts: {
-        key: string; email: string; amount: number; ref: string;
+        key: string; email: string; amount: number;
         callback: (response: { reference: string }) => void;
         onClose: () => void;
       }) => { openIframe: () => void };
     };
 
-    const handler = PaystackPop.setup({
-      key: publicKey,
-      email: user?.email ?? guestEmail ?? "",
-      amount: Math.round(serverTotal * 100),
-      ref: reference,
-
-      callback: async (response) => {
+    // PayStack v1 inline.js validates `typeof callback === "function"` and
+    // some bundler outputs of async arrow functions fail that check. Wrap in
+    // a regular function that delegates to an async IIFE.
+    function onPaystackSuccess(response: { reference: string }) {
+      void (async () => {
         try {
           const res = await fetch("/api/checkout/verify", {
             method: "POST",
@@ -271,12 +267,22 @@ export function CheckoutView() {
           );
           setSubmitting(false);
         }
-      },
+      })();
+    }
 
-      onClose: () => {
-        setError("Payment was cancelled. You have not been charged.");
-        setSubmitting(false);
-      },
+    function onPaystackClose() {
+      setError("Payment was cancelled. You have not been charged.");
+      setSubmitting(false);
+    }
+
+    // No `ref` passed — PayStack auto-generates a unique reference for
+    // each popup, which we capture in the success callback and verify.
+    const handler = PaystackPop.setup({
+      key: publicKey,
+      email: user?.email ?? guestEmail ?? "",
+      amount: Math.round(serverTotal * 100),
+      callback: onPaystackSuccess,
+      onClose: onPaystackClose,
     });
 
     handler.openIframe();
@@ -489,10 +495,14 @@ export function CheckoutView() {
 
       <footer className="mt-16 border-t border-outline/10 px-6 py-5">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
-          <p className="text-[10px] uppercase tracking-widest text-on-surface-faint">© 2024 Eesha Luxe. The Digital Atelier.</p>
+          <p className="text-[10px] uppercase tracking-widest text-on-surface-faint">© {new Date().getFullYear()} Eesha Luxe. The Digital Atelier.</p>
           <div className="flex items-center gap-5">
-            {["Privacy", "Shipping", "Returns"].map((l) => (
-              <Link key={l} href={`/${l.toLowerCase()}`} className="text-[10px] uppercase tracking-widest text-on-surface-faint hover:text-primary transition-colors">{l}</Link>
+            {[
+              { label: "Privacy", href: "/privacy" },
+              { label: "Terms", href: "/terms" },
+              { label: "FAQ", href: "/faq" },
+            ].map((l) => (
+              <Link key={l.href} href={l.href} className="text-[10px] uppercase tracking-widest text-on-surface-faint hover:text-primary transition-colors">{l.label}</Link>
             ))}
           </div>
         </div>

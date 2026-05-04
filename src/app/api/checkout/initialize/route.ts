@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { initializeTransaction } from "@/lib/paystack";
 import { prisma } from "@/lib/prisma";
 import { safeJson } from "@/lib/errors";
 
@@ -64,14 +63,15 @@ export async function POST(req: NextRequest) {
     const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
     const total = Math.round((subtotal + tax) * 100) / 100;
 
-    const data = await initializeTransaction({
-      email,
-      amount: Math.round(total * 100), // kobo
-    });
-
+    // Note: we do NOT pre-initialize a server-side reference here.
+    // Letting PayStack auto-generate the ref inside the popup avoids
+    // "duplicate_reference" errors and keeps each attempt unique.
+    // The verify route still recomputes the total server-side and
+    // compares it against PayStack's confirmed amount, so security is
+    // preserved end-to-end.
     return NextResponse.json({
-      reference: data.reference,
       publicKey: process.env.PAYSTACK_PUBLIC_KEY,
+      email,
       total,
     });
   } catch (err) {
